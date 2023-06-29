@@ -1,11 +1,11 @@
-process.on('uncaugthException', (err) => {
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+
+process.on('uncaughtException', (err) => {
   console.log('UNCAUGHT EXCEPTION SHUTTING DOWN...');
   console.log(err.name, err.message);
   process.exit(1);
 });
-
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 
 dotenv.config({ path: './config.env' });
 
