@@ -19,7 +19,7 @@ mongoose
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false,
-    useUnifiedTopology: true, // Add this option to use the new Server Discover and Monitoring engine
+    useUnifiedTopology: true // Add this option to use the new Server Discover and Monitoring engine
   })
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.log('Failed to connect to MongoDB:', err));

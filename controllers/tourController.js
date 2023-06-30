@@ -23,8 +23,8 @@ exports.getAllTours = catchAsync(async (req, res) => {
     status: 'success',
     results: tours.length,
     data: {
-      tours,
-    },
+      tours
+    }
   });
 });
 
@@ -38,8 +38,8 @@ exports.getTour = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      tour,
-    },
+      tour
+    }
   });
 });
 
@@ -48,21 +48,21 @@ exports.createTour = catchAsync(async (req, res, next) => {
   res.status(201).json({
     status: 'success',
     data: {
-      tour: newTour,
-    },
+      tour: newTour
+    }
   });
 });
 
 exports.updateTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
-    runValidators: true,
+    runValidators: true
   });
   res.status(200).json({
     status: 'success',
     data: {
-      tour,
-    },
+      tour
+    }
   });
 });
 
@@ -74,14 +74,14 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
   }
   res.status(204).json({
     status: 'success',
-    data: null,
+    data: null
   });
 });
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
   const stats = await Tour.aggregate([
     {
-      $match: { ratingsAverage: { $gte: 4.5 } },
+      $match: { ratingsAverage: { $gte: 4.5 } }
     },
     {
       $group: {
@@ -91,19 +91,19 @@ exports.getTourStats = catchAsync(async (req, res, next) => {
         avgRating: { $avg: '$ratingsAverage' },
         avgPrice: { $avg: '$price' },
         minPrice: { $min: '$price' },
-        maxPrice: { $max: '$price' },
-      },
+        maxPrice: { $max: '$price' }
+      }
     },
     {
-      $sort: { avgPrice: 1 },
-    },
+      $sort: { avgPrice: 1 }
+    }
   ]);
 
   res.status(200).json({
     status: 'success',
     data: {
-      stats,
-    },
+      stats
+    }
   });
 });
 
@@ -112,44 +112,44 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
 
   const plan = await Tour.aggregate([
     {
-      $unwind: '$startDates',
+      $unwind: '$startDates'
     },
     {
       $match: {
         startDates: {
           $gte: new Date(`${year}-01-01`),
-          $lte: new Date(`${year}-12-31`),
-        },
-      },
+          $lte: new Date(`${year}-12-31`)
+        }
+      }
     },
     {
       $group: {
         _id: { $month: '$startDates' },
         numTourStarts: { $sum: 1 },
-        tours: { $push: '$name' },
-      },
+        tours: { $push: '$name' }
+      }
     },
     {
-      $addFields: { month: '$_id' },
+      $addFields: { month: '$_id' }
     },
     {
       $project: {
-        _id: 0,
-      },
+        _id: 0
+      }
     },
     {
-      $sort: { numTourStarts: -1 },
+      $sort: { numTourStarts: -1 }
     },
     {
-      $limit: 12,
-    },
+      $limit: 12
+    }
   ]);
 
   res.status(200).json({
     status: 'success',
     results: plan.length,
     data: {
-      plan,
-    },
+      plan
+    }
   });
 });
