@@ -70,7 +70,6 @@ userSchema.pre('save', function (next) {
 
 // Do not select inactive/deleted users
 userSchema.pre(/^find/, function (next) {
-  this.select('-__v');
   this.find({ active: { $ne: false } });
   next();
 });
@@ -78,8 +77,10 @@ userSchema.pre(/^find/, function (next) {
 // SCHEMA METHODS
 
 // Compares encrypted from the database and the input password
-userSchema.methods.correctPassword = async (candidatePassword, userPassword) =>
-  await bcrypt.compare(candidatePassword, userPassword);
+userSchema.methods.isPasswordCorrect = async (
+  candidatePassword,
+  userPassword
+) => await bcrypt.compare(candidatePassword, userPassword);
 
 // returns true if the password has been changed after the token has been issued
 userSchema.methods.changedPasswordAfter = async function (JWTTimestamp) {

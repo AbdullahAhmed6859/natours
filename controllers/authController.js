@@ -16,7 +16,9 @@ const signToken = (id) => {
 
 // creates the token and sends it as response
 const createSendToken = (user, statusCode, res, sendData) => {
+  // generate token
   const token = signToken(user._id);
+
   let cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -57,7 +59,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
   const user = await User.findOne({ email }).select('+password');
 
-  if (!user || !(await user.correctPassword(password, user.password))) {
+  if (!user || !(await user.isPasswordCorrect(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
   }
 
@@ -68,6 +70,7 @@ exports.login = catchAsync(async (req, res, next) => {
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
 
+  // filter out the jwt
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
@@ -75,12 +78,14 @@ exports.protect = catchAsync(async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   }
 
+  // cause an error if the token is not present
   if (!token) {
     return next(
       new AppError('You are not logged in! Plese log in to get Access', 401)
     );
   }
 
+  // hash the token
   const decodedJWT = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
   const currentUser = await User.findById(decodedJWT.id);
 
@@ -112,7 +117,6 @@ exports.restrictTo = (...roles) => {
   };
 };
 
-// asks for user email and sends email with the reset token
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   // find user using the email address
   const user = await User.findOne({ email: req.body.email });
@@ -150,11 +154,13 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
+  // hash the token from the parameter
   const hashedToked = crypto
     .createHash('sha256')
     .update(req.params.token)
     .digest('hex');
 
+  // find user with the same hash
   const user = await User.findOne({
     passwordResetToken: hashedToked,
     passwordResetExpires: { $gt: Date.now() }
