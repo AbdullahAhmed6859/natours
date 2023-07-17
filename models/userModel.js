@@ -7,18 +7,24 @@ const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Please tell us your name'],
-    trim: true
+    trim: true,
+    minlength: [3, 'A name must be atleast 3 characters']
   },
   email: {
     type: String,
     required: [true, 'Please provide your email address'],
+    trim: true,
     unique: true,
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email address']
   },
-  photo: String,
+  photo: {
+    type: String,
+    default: 'default.jpg'
+  },
   role: {
     type: String,
+    trim: true,
     enum: ['user', 'guide', 'lead-guide', 'admin'],
     default: 'user'
   },
@@ -83,7 +89,7 @@ userSchema.methods.isPasswordCorrect = async (
 ) => await bcrypt.compare(candidatePassword, userPassword);
 
 // returns true if the password has been changed after the token has been issued
-userSchema.methods.changedPasswordAfter = async function (JWTTimestamp) {
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     const changedTimeStamp = parseInt(
       this.passwordChangedAt.getTime() / 1000,

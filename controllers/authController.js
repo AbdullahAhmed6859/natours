@@ -76,7 +76,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
-  }
+  } else if (req.cookies.jwt) token = req.cookies.jwt;
 
   // cause an error if the token is not present
   if (!token) {
@@ -95,16 +95,50 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
   // iat is the time stamp for issued at
-  if (await currentUser.changedPasswordAfter(decodedJWT.iat)) {
+  if (currentUser.changedPasswordAfter(decodedJWT.iat)) {
     return next(
       new AppError('User recently changed their password! Please log in again.')
     );
   }
 
   req.user = currentUser;
+  res.locals.user = currentUser;
   next();
 });
 
+exports.isLoggedIn = async (req, res, next) => {
+  if (req.cookies.jwt) {
+    try {
+      // hash the token
+      const decodedJWT = await promisify(jwt.verify)(
+        req.cookies.jwt,
+        process.env.JWT_SECRET
+      );
+
+      const currentUser = await User.findById(decodedJWT.id);
+
+      if (!currentUser) return next();
+      // iat is the time stamp for issued at
+      if (currentUser.changedPasswordAfter(decodedJWT.iat)) return next();
+
+      res.locals.user = currentUser;
+    } finally {
+      return next();
+    }
+  }
+  next();
+};
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'Logged Out', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true
+  });
+  res.status(200).json({
+    status: 'success',
+    message: 'You are logged out'
+  });
+};
 // used to restrict routes to specific admin roles
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
@@ -184,12 +218,19 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 exports.updateMyPassword = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id).select('+password');
 
-  if (!(await user.correctPassword(req.body.password, user.password))) {
+  if (
+    !(await user.isPasswordCorrect(req.body.currentPassword, user.password))
+  ) {
     return next(new AppError('Your current password is incorrect', 401));
   }
 
-  user.password = req.body.passwordNew;
-  user.passwordConfirm = req.body.passwordNew;
+  if (req.body.password !== req.body.passwordConfirm)
+    return next(
+      new AppError('New Password and Confirm Password are different', 401)
+    );
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.password;
   await user.save();
 
   createSendToken(user, 200, res, false);

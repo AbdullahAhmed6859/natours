@@ -6,12 +6,16 @@
   "scripts": {
     "start": "nodemon server.js",
     "start:prod": "$Env:NODE_ENV = 'production'; nodemon server.js",
-    "debug": "ndb server.js"
+    "debug": "ndb server.js",
+    "dev": "parcel ./public/js/index.js",
+    "build": "parcel build ./public/js/index.js"
   },
   "author": "Abdullah Ahmed",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.4.0",
     "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-mongo-sanitize": "^2.2.0",
@@ -19,16 +23,13 @@
     "helmet": "^7.0.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.0",
-    "mongodb": "^5.6.0",
     "mongoose": "^5.13.17",
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.3",
+    "pug": "^3.0.2",
     "slugify": "^1.6.6",
     "validator": "^13.9.0",
     "xss-clean": "^0.1.4"
-  },
-  "devDependencies": {
-    "prettier": "^2.8.8"
   },
   "engines": {
     "node": ">=10.0.0"

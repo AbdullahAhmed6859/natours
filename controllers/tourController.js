@@ -113,7 +113,6 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
     }
   });
 
-  console.log(distance, lat, lng, unit);
   res.status(200).json({
     results: tours.length,
     status: 'success',

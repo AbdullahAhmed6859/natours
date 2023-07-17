@@ -12,7 +12,6 @@ const handleValidationErrorDB = (err) => {
 
 const handleDuplicateFieldsDB = (err) => {
   const value = err.message.match(/(["'])(\\?.)*?\1/)[0];
-  console.log(value);
   const message = `Duplicate field value: ${value}, Please use another value`;
   return new AppError(message, 400);
 };
@@ -23,26 +22,39 @@ const handleJWTError = () =>
 const handleJWTExpiredError = () =>
   new AppError('Your Token has expired! Please log in again', 401);
 
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack
-  });
+const sendErrorDev = (err, req, res) => {
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      error: err,
+      message: err.message,
+      stack: err.stack
+    });
+  } else {
+    return res
+      .status(err.statusCode)
+      .render('error', { title: 'Something went Wrong', message: err.message });
+  }
 };
 
 const sendErrorProd = (err, res) => {
-  if (err.isOperational) {
-    res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message
-    });
+  if (req.originalUrl.startsWith('/api')) {
+    if (err.isOperational) {
+      return res.status(err.statusCode).render('error', {
+        title: 'Something went Wrong',
+        message: err.message
+      });
+    } else {
+      // console.error('ERROR', err);
+      return res.status(500).json({
+        status: 'error',
+        message: 'Something went very wrong!'
+      });
+    }
   } else {
-    // console.error('ERROR', err);
-    res.status(500).json({
-      status: 'error',
-      message: 'Something went very wrong!'
+    return res.status(err.statusCode).render('error', {
+      title: 'Something went Wrong',
+      message: 'Please Try Again Later'
     });
   }
 };
@@ -52,7 +64,7 @@ module.exports = (err, req, res, next) => {
   err.status = err.status || 'error';
 
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, res);
+    sendErrorDev(err, req, res);
     console.log(err.name);
   } else if (process.env.NODE_ENV === 'production') {
     let error;
@@ -65,6 +77,6 @@ module.exports = (err, req, res, next) => {
 
     if (!error) error = new AppError(err.message, err.statusCode);
 
-    sendErrorProd(error, res);
+    sendErrorProd(error, req, res);
   }
 };
