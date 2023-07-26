@@ -71,7 +71,7 @@ const login = async (email, password) => {
       }, 100);
     }
   } catch (err) {
-    showAlert('error', err.response.data.message);
+    showAlert('error', 'Error Logging in');
   }
 };
 
@@ -99,6 +99,7 @@ const updateSettings = async (data, type) => {
     });
     if (res.data.status === 'success')
       showAlert('success', `${type.toUpperCase()} Updated Successfully`);
+    window.setTimeout(() => location.reload(), 100);
   } catch (err) {
     showAlert('error', err.message);
     console.log(err);
@@ -138,14 +139,14 @@ try {
   const updateDataForm = document.querySelector('.form-user-data');
   updateDataForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = new FormData();
+    form.append('name', document.getElementById('name').value);
+    form.append('email', document.getElementById('email').value);
+    form.append('photo', document.getElementById('photo').files[0]);
+    console.log(form);
     document.querySelector('.btn--save-user-data').textContent = 'Updating...';
-    await updateSettings(
-      {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value
-      },
-      'data'
-    );
+    await updateSettings(form, 'data');
+
     document.querySelector('.btn--save-user-data').textContent =
       'Save Settings';
   });
